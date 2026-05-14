@@ -63,6 +63,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       const data: ChatResponse = await response.json()
 
+      // Normalize choices - handle both string and object formats
+      const normalizedChoices = data.choices.map((c: any) => 
+        typeof c === 'string' ? c : c.text || String(c)
+      )
+
       set({
         messages: [
           {
@@ -73,7 +78,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
             timestamp: Date.now(),
           },
         ],
-        choices: data.choices,
+        choices: normalizedChoices,
         sceneId: data.sceneId,
         emotion: data.emotion,
         isLoading: false,
@@ -124,6 +129,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       const data: ChatResponse = await response.json()
 
+      // Normalize choices - handle both string and object formats
+      const normalizedChoices = data.choices.map((c: any) => 
+        typeof c === 'string' ? c : c.text || String(c)
+      )
+
       const narratorMessage: Message = {
         id: generateId(),
         speaker: 'narrator',
@@ -134,7 +144,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
       set((state) => ({
         messages: [...state.messages, narratorMessage],
-        choices: data.choices,
+        choices: normalizedChoices,
         sceneId: data.sceneId,
         emotion: data.emotion,
         isLoading: false,
