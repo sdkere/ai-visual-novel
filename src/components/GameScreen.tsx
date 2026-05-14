@@ -21,21 +21,22 @@ export default function GameScreen() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, choices])
 
   const bgGradient = EMOTION_BACKGROUNDS[emotion] || EMOTION_BACKGROUNDS.neutral
+  const showChoices = choices.length > 0 && !isLoading
 
   return (
-    <div className="game-screen">
+    <div className="game-screen flex flex-col">
       {/* Dynamic background */}
       <motion.div
-        className={`absolute inset-0 bg-gradient-to-b ${bgGradient} transition-colors duration-2000`}
+        className={`fixed inset-0 bg-gradient-to-b ${bgGradient} transition-colors duration-2000`}
         animate={{ opacity: 1 }}
         transition={{ duration: 2 }}
       />
 
       {/* Atmospheric particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {[...Array(15)].map((_, i) => (
           <motion.div
             key={i}
@@ -60,7 +61,7 @@ export default function GameScreen() {
       </div>
 
       {/* Header bar */}
-      <div className="absolute top-0 left-0 right-0 z-30 flex justify-between items-center p-4">
+      <div className="relative z-30 flex justify-between items-center p-4 shrink-0">
         <div className="text-purple-300 text-sm">幻境·迷雾森林</div>
         <button
           onClick={resetGame}
@@ -70,8 +71,8 @@ export default function GameScreen() {
         </button>
       </div>
 
-      {/* Messages area */}
-      <div className="absolute inset-x-0 top-16 bottom-[200px] overflow-y-auto px-4 pb-4 z-10">
+      {/* Messages area - takes remaining space */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 relative z-10">
         <div className="max-w-3xl mx-auto space-y-4">
           <AnimatePresence>
             {messages.map((msg, index) => (
@@ -125,10 +126,10 @@ export default function GameScreen() {
         </div>
       </div>
 
-      {/* Choices or Dialog input */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
+      {/* Bottom panel - Choices or Dialog input */}
+      <div className="relative z-20 shrink-0">
         <AnimatePresence mode="wait">
-          {choices.length > 0 && !isLoading ? (
+          {showChoices ? (
             <motion.div
               key="choices"
               initial={{ opacity: 0, y: 20 }}

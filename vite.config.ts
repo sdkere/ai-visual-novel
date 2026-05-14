@@ -11,6 +11,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: '0.0.0.0',
+    allowedHosts: ['hxytest.ddnsto.com', 'localhost', '.ddnsto.com'],
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
