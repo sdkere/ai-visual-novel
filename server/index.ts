@@ -3,16 +3,22 @@ import express from 'express'
 import cors from 'cors'
 import { chatRouter } from './routes/chat.js'
 import { storyRouter } from './routes/story.js'
+import { authRouter } from './routes/auth.js'
+import { saveRouter } from './routes/save.js'
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT: number = parseInt(process.env.PORT || '3001', 10)
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: '5mb' }))
 
-// Routes
+// Public routes
+app.use('/api/auth', authRouter)
 app.use('/api/chat', chatRouter)
 app.use('/api/story', storyRouter)
+
+// Protected routes
+app.use('/api/saves', saveRouter)
 
 // Health check
 app.get('/api/health', (req, res) => {

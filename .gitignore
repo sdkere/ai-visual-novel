@@ -2,3 +2,9 @@ node_modules
 dist
 .env
 *.local
+data/game.db
+data/game.db-shm
+data/game.db-wal
+*.db
+*.db-shm
+*.db-wal

@@ -1,29 +1,82 @@
 import { Router } from 'express'
+import fs from 'fs'
+import path from 'path'
 
 export const storyRouter = Router()
 
-// Available worlds
-const WORLDS = [
-  {
-    id: 'enchanted-forest',
-    title: '幻境·迷雾森林',
-    description: '在一片被永恒迷雾笼罩的古老森林中，隐藏着一个鲜为人知的精灵王国。千年来，森林的守护结界保护着这里的和平。但最近，结界开始出现裂痕...',
-    cover: '/worlds/enchanted-forest.jpg',
-    characters: ['艾拉', '凯尔', '露娜'],
-    tags: ['奇幻', '冒险', '悬疑'],
-    estimatedPlayTime: '2-3小时',
-  },
-  // More worlds can be added here
-]
+const storiesDir = path.join(process.cwd(), 'data', 'stories')
 
-storyRouter.get('/worlds', (req, res) => {
-  res.json(WORLDS)
-})
+function loadStories() {
+  if (!fs.existsSync(storiesDir)) return []
+  return fs.readdirSync(storiesDir)
+    .filter(f => f.endsWith('.json'))
+    .map(f => JSON.parse(fs.readFileSync(path.join(storiesDir, f), 'utf-8')))
+}
 
-storyRouter.get('/worlds/:worldId', (req, res) => {
-  const world = WORLDS.find((w) => w.id === req.params.worldId)
-  if (!world) {
-    return res.status(404).json({ error: 'World not found' })
+// GET /api/categories
+storyRouter.get('/categories', (req, res) => {
+  const stories = loadStories()
+  const categoryMap = new Map<string, any>()
+
+  for (const story of stories) {
+    const catId = story.category || 'uncategorized'
+    if (!categoryMap.has(catId)) {
+      categoryMap.set(catId, {
+        id: catId,
+        name: getCategoryName(catId),
+        icon: story.categoryIcon || '📚',
+        description: story.categoryDesc || '',
+        storyCount: 0,
+        stories: [],
+      })
+    }
+    const cat = categoryMap.get(catId)!
+    cat.storyCount++
+    cat.stories.push({
+      id: story.id,
+      title: story.title,
+      subtitle: story.subtitle,
+      cover: story.cover,
+      category: story.category,
+      difficulty: story.difficulty,
+      tags: story.tags || [],
+      npcCount: story.npcs ? story.npcs.length : 0,
+    })
   }
-  res.json(world)
+
+  res.json(Array.from(categoryMap.values()))
 })
+
+// GET /api/stories/:id
+storyRouter.get('/stories/:id', (req, res) => {
+  const stories = loadStories()
+  const story = stories.find((s) => s.id === req.params.id)
+  if (!story) return res.status(404).json({ error: 'Story not found' })
+  res.json(story)
+})
+
+// Legacy endpoint
+storyRouter.get('/worlds', (req, res) => {
+  const stories = loadStories()
+  res.json(stories.map((s) => ({
+    id: s.id,
+    title: s.title,
+    description: s.background?.substring(0, 200) || '',
+    cover: s.cover || '',
+    characters: s.npcs?.map((n: any) => n.name) || [],
+    tags: s.tags || [],
+    estimatedPlayTime: '2-3小时',
+  })))
+})
+
+function getCategoryName(catId: string): string {
+  const names: Record<string, string> = {
+    'classic-literature': '🌀 经典重构',
+    'mystery': '🔍 烧脑推理',
+    'romance': '💕 浪漫邂逅',
+    'scifi': '🚀 未来异想',
+    'fantasy': '⚔️ 异世冒险',
+    'horror': '👻 暗夜惊魂',
+  }
+  return names[catId] || catId
+}

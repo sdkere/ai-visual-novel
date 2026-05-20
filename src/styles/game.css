@@ -9,7 +9,8 @@
   --text-secondary: #a0a0b0;
   --accent: #7c3aed;
   --accent-light: #a78bfa;
-  --gold: #fbbf24;
+  --gold: #d4a574;
+  --amber: #f0c27f;
 }
 
 * {
@@ -21,16 +22,61 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Noto Serif SC', serif;
-  overflow: hidden;
+  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+  overflow-x: hidden;
 }
 
 #root {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
 }
 
-/* Game Screen */
+/* ===== Main Menu ===== */
+.main-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, var(--bg-secondary), var(--bg-primary));
+  padding: 3rem 2rem 2rem;
+  overflow-y: auto;
+}
+
+.menu-title {
+  font-size: 3.5rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, var(--gold), var(--accent-light), var(--amber));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 40px rgba(212, 165, 116, 0.2);
+}
+
+.menu-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* ===== World / Story Card ===== */
+.world-card {
+  background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(10, 10, 15, 0.9));
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.world-card:hover {
+  border-color: rgba(212, 165, 116, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.15);
+}
+
+/* ===== Game Screen ===== */
 .game-screen {
   position: relative;
   width: 100%;
@@ -40,152 +86,80 @@ body {
   flex-direction: column;
 }
 
-/* Background */
-.game-background {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  transition: opacity 1s ease-in-out;
-}
-
-.game-background::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.8));
-}
-
-/* Character area */
-.character-container {
-  position: absolute;
-  bottom: 200px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 2rem;
-  z-index: 10;
-}
-
-.character-sprite {
-  width: 300px;
-  height: 500px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
-  transition: all 0.3s ease;
-}
-
-.character-sprite.speaking {
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 30px rgba(124, 58, 237, 0.5));
+/* Story Detail & Character Create pages */
+.story-detail-page,
+.character-create-page {
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* Dialog box */
 .dialog-box {
   background: linear-gradient(to top, rgba(10, 10, 15, 0.98), rgba(10, 10, 15, 0.9));
-  border-top: 2px solid rgba(124, 58, 237, 0.3);
-  padding: 1.5rem 2rem;
-  min-height: 140px;
+  border-top: 2px solid rgba(124, 58, 237, 0.2);
+  padding: 0.75rem 0.75rem;
+  min-height: 80px;
   backdrop-filter: blur(10px);
 }
 
-.dialog-speaker {
-  color: var(--accent-light);
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.dialog-content {
-  color: var(--text-primary);
-  font-size: 1.05rem;
-  line-height: 1.8;
-  max-width: 800px;
+@media (min-width: 640px) {
+  .dialog-box {
+    padding: 1.2rem 1.5rem;
+    min-height: 100px;
+  }
 }
 
 /* Choices */
 .choices-container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem 1.5rem;
-  max-width: 700px;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem 0.5rem;
+  max-width: 800px;
   margin: 0 auto;
   width: 100%;
 }
 
+@media (min-width: 640px) {
+  .choices-container {
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 1rem;
+  }
+}
+
 .choice-button {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(124, 58, 237, 0.1));
-  border: 1px solid rgba(124, 58, 237, 0.4);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(212, 165, 116, 0.08));
+  border: 1px solid rgba(124, 58, 237, 0.3);
   color: var(--text-primary);
-  padding: 1rem 1.5rem;
+  padding: 0.6rem 0.8rem;
   border-radius: 0.5rem;
   font-family: 'Noto Serif SC', serif;
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
 }
 
+@media (min-width: 640px) {
+  .choice-button {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}
+
 .choice-button:hover {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(124, 58, 237, 0.2));
-  border-color: var(--accent-light);
-  transform: translateX(8px);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(212, 165, 116, 0.15));
+  border-color: var(--gold);
+  transform: translateX(6px);
 }
 
-/* Main Menu */
-.main-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: radial-gradient(ellipse at center, var(--bg-secondary), var(--bg-primary));
+.choice-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.menu-title {
-  font-size: 4rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, var(--accent-light), var(--gold));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 1rem;
-  text-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
-}
-
-.menu-subtitle {
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  margin-bottom: 3rem;
-}
-
-/* World Card */
-.world-card {
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(10, 10, 15, 0.9));
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  width: 90%;
-  max-width: 500px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.world-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.2);
-}
-
-.world-cover {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-/* Loading animation */
+/* ===== Loading Animation ===== */
 .loading-dots {
   display: inline-flex;
   gap: 4px;
@@ -207,40 +181,61 @@ body {
   40% { transform: scale(1); }
 }
 
-/* Emotion-based background overlays */
-.emotion-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  transition: all 1s ease;
+/* ===== Range Input Styling ===== */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #333;
+  outline: none;
 }
 
-.emotion-overlay.mysterious {
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(75, 0, 130, 0.2));
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--accent-light);
 }
 
-.emotion-overlay.warm {
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(255, 165, 0, 0.1));
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid var(--accent-light);
 }
 
-.emotion-overlay.tense {
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(255, 0, 0, 0.1));
-}
-
-.emotion-overlay.sad {
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 139, 0.15));
-}
-
-/* Scrollbar */
+/* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: rgba(124, 58, 237, 0.3);
   border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.5);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .menu-title {
+    font-size: 2.2rem;
+  }
+
+  .menu-subtitle {
+    font-size: 0.9rem;
+  }
 }

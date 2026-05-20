@@ -28,21 +28,35 @@ export async function generateChatResponse(
       model: process.env.AI_MODEL || 'gpt-4o',
       messages,
       temperature: options?.temperature ?? 0.8,
-      max_tokens: options?.maxTokens ?? 800,
-      response_format: { type: 'json_object' },
+      max_tokens: options?.maxTokens ?? 1500,
     })
 
-    const content = response.choices[0]?.message?.content || '{}'
-    const parsed = JSON.parse(content)
+    const content = response.choices[0]?.message?.content || ''
+    const finishReason = response.choices[0]?.finish_reason
 
-    return {
-      content: parsed.content || parsed.dialogue || content,
-      emotion: parsed.emotion || 'neutral',
-      choices: parsed.choices || [],
+    // If truncated, log a warning
+    if (finishReason === 'length') {
+      console.warn('AI response was truncated (max_tokens reached)')
+    }
+
+    // Try to parse as JSON first (in case model returns structured output)
+    try {
+      const parsed = JSON.parse(content)
+      return {
+        content: parsed.content || parsed.dialogue || parsed.text || content,
+        emotion: parsed.emotion || parsed.mood || 'neutral',
+        choices: parsed.choices || [],
+      }
+    } catch {
+      // Not JSON, return as plain text
+      return {
+        content: content,
+        emotion: 'neutral',
+        choices: [],
+      }
     }
   } catch (error: any) {
     console.error('AI API Error:', error.message)
-    // Fallback response when API fails
     return {
       content: '（系统提示：AI 服务暂时不可用，请稍后再试）',
       emotion: 'neutral',

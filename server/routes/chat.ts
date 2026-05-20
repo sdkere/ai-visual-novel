@@ -3,22 +3,31 @@ import { generateStoryResponse, type StoryContext } from '../services/story-engi
 
 export const chatRouter = Router()
 
-// In-memory session store (replace with Redis in production)
+// In-memory session store
 const sessions = new Map<string, StoryContext>()
 
-chatRouter.post('/message', async (req, res) => {
+chatRouter.post('/', async (req, res) => {
   try {
-    const { sessionId, worldId, message, playerName } = req.body
+    const { storyId, npcId, message, playerAttributes, history, phase } = req.body
 
-    if (!sessionId || !worldId) {
-      return res.status(400).json({ error: 'Missing sessionId or worldId' })
+    if (!storyId) {
+      return res.status(400).json({ error: 'Missing storyId' })
     }
 
     // Get or create session
+    const sessionId = req.body.sessionId || `session_${Date.now()}`
     let context = sessions.get(sessionId)
     if (!context) {
-      context = createNewSession(worldId, playerName || '旅行者')
+      context = createNewSession(storyId, playerAttributes)
       sessions.set(sessionId, context)
+    }
+
+    // Update context
+    if (playerAttributes) {
+      context.playerState.attributes = playerAttributes
+    }
+    if (phase) {
+      context.sceneId = phase
     }
 
     // Add player message to history
@@ -26,20 +35,60 @@ chatRouter.post('/message', async (req, res) => {
       speaker: 'player',
       content: message || '开始探索',
       timestamp: Date.now(),
+      npcId: npcId,
     })
 
     // Generate AI response
-    const response = await generateStoryResponse(context, message || '开始探索')
+    const response = await generateStoryResponse(context, message || '开始探索', npcId || '_narrator')
 
     // Add AI response to history
+    context.history.push({
+      speaker: npcId === '_narrator' ? 'narrator' : 'npc',
+      content: response.content,
+      timestamp: Date.now(),
+      npcId: npcId,
+    })
+
+    res.json({
+      reply: response.content,
+      mood: response.emotion,
+      sceneUpdate: '',
+      hint: '',
+      choices: response.choices || [],
+    })
+  } catch (error: any) {
+    console.error('Chat error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Legacy endpoint
+chatRouter.post('/message', async (req, res) => {
+  try {
+    const { sessionId, worldId, message, playerName } = req.body
+    if (!sessionId || !worldId) {
+      return res.status(400).json({ error: 'Missing sessionId or worldId' })
+    }
+
+    let context = sessions.get(sessionId)
+    if (!context) {
+      context = createNewSession(worldId, { name: playerName || '旅行者' })
+      sessions.set(sessionId, context)
+    }
+
+    context.history.push({
+      speaker: 'player',
+      content: message || '开始探索',
+      timestamp: Date.now(),
+    })
+
+    const response = await generateStoryResponse(context, message || '开始探索', '_narrator')
+
     context.history.push({
       speaker: 'narrator',
       content: response.content,
       timestamp: Date.now(),
     })
-
-    // Update scene based on response (simplified)
-    context.sceneId = `${context.sceneId}_next`
 
     res.json({
       content: response.content,
@@ -56,9 +105,7 @@ chatRouter.post('/message', async (req, res) => {
 
 chatRouter.get('/session/:sessionId', (req, res) => {
   const context = sessions.get(req.params.sessionId)
-  if (!context) {
-    return res.status(404).json({ error: 'Session not found' })
-  }
+  if (!context) return res.status(404).json({ error: 'Session not found' })
   res.json({
     worldId: context.worldId,
     sceneId: context.sceneId,
@@ -72,38 +119,16 @@ chatRouter.delete('/session/:sessionId', (req, res) => {
   res.json({ success: true })
 })
 
-function createNewSession(worldId: string, playerName: string): StoryContext {
+function createNewSession(worldId: string, playerAttrs?: any): StoryContext {
   return {
     worldId,
-    sceneId: 'start',
-    characters: [
-      {
-        id: 'aira',
-        name: '艾拉',
-        personality: '温柔坚强的森林守护者',
-        avatar: '/characters/aira.png',
-        emotion: 'curious',
-      },
-      {
-        id: 'kael',
-        name: '凯尔',
-        personality: '沉默寡言的暗影猎人',
-        avatar: '/characters/kael.png',
-        emotion: 'guarded',
-      },
-      {
-        id: 'luna',
-        name: '露娜',
-        personality: '神秘的占星师',
-        avatar: '/characters/luna.png',
-        emotion: 'mysterious',
-      },
-    ],
+    sceneId: 'phase_1',
+    characters: [],
     playerState: {
-      name: playerName,
-      attributes: { courage: 5, wisdom: 5, charisma: 5 },
-      inventory: ['古老的指南针'],
-      relationships: { aira: 0, kael: 0, luna: 0 },
+      name: playerAttrs?.name || '新来的教师',
+      attributes: playerAttrs || {},
+      inventory: [],
+      relationships: {},
     },
     history: [],
   }
