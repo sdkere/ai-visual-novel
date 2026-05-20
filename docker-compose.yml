@@ -1,0 +1,13 @@
+services:
+  ai-visual-novel:
+    build: .
+    container_name: ai-visual-novel
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production

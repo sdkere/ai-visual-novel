@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+data/game.db
+data/game.db-shm
+data/game.db-wal
