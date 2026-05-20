@@ -1,13 +1,13 @@
 services:
   ai-visual-novel:
-    build: .
+    image: node:22-alpine
     container_name: ai-visual-novel
     restart: unless-stopped
     ports:
       - "3001:3001"
     volumes:
-      - ./data:/app/data
-    env_file:
-      - .env
+      - /root/projects/ai-visual-novel:/app
+    working_dir: /app
     environment:
       - NODE_ENV=production
+    command: sh -c "npm install --omit=dev && npm install tsx && node --import tsx server/index.ts"
