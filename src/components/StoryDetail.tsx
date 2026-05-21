@@ -5,6 +5,8 @@ import { useGameStore, populateNpcCache } from '@/store/gameStore'
 export default function StoryDetail() {
   const { storyDetail, selectedStoryId, goToCharacterCreate, goToCategories, isLoading } = useGameStore()
 
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
   useEffect(() => {
     if (storyDetail) {
       populateNpcCache(storyDetail.id, storyDetail.npcs)
@@ -28,8 +30,12 @@ export default function StoryDetail() {
     <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#0a0a0f] overflow-y-auto">
       {/* Hero section */}
       <div className="relative">
-        <div className="h-64 bg-gradient-to-b from-purple-950/50 to-transparent flex items-end">
-          <div className="max-w-4xl mx-auto w-full px-6 pb-6">
+        <div className="h-72 sm:h-80 bg-gradient-to-b from-purple-950/50 to-transparent flex items-end relative overflow-hidden">
+          {storyDetail.cover && (
+            <img src={storyDetail.cover} alt={storyDetail.title} className="absolute inset-0 w-full h-full object-cover opacity-50 pointer-events-none" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent pointer-events-none" />
+          <div className="max-w-4xl mx-auto w-full px-6 pb-6 relative z-10">
             <button
               onClick={goToCategories}
               className="mb-4 text-gray-400 hover:text-amber-400 transition text-sm"

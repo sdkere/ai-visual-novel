@@ -53,6 +53,34 @@ export default function GameScreen() {
   const bgGradient = EMOTION_BACKGROUNDS[emotion] || EMOTION_BACKGROUNDS.neutral
   const showChoices = choices.length > 0 && !isLoading
 
+  // 从消息内容中提取嵌入的选项（AI可能不听话把选项混入正文）
+  const extractChoicesFromContent = (content: string): { text: string; choices: string[] } => {
+    const lines = content.split('\n')
+    const contentLines: string[] = []
+    const extractedChoices: string[] = []
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) { contentLines.push(line); continue }
+
+      // 匹配各种选项格式
+      const matched =
+        trimmed.match(/^(?:选择|选项|行动|你可以)[\s]*[1-9][.、:：\)）]\s*(.+)/) ||
+        trimmed.match(/^[1-9][.、:）\)]\s*(.+)/) ||
+        trimmed.match(/^[①②③④⑤⑥⑥⑦⑧⑨⑩]\s*(.+)/) ||
+        trimmed.match(/^[-•·]\s*(.+)$/)  // 短的 bullet 项（排除正文中的破折号）
+
+      if (matched && trimmed.length < 60) {
+        extractedChoices.push(matched[1].trim())
+      } else {
+        contentLines.push(line)
+      }
+    }
+
+    const cleanText = contentLines.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+    return { text: cleanText, choices: extractedChoices.slice(0, 4) }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (input.trim() && !isLoading) {
@@ -184,7 +212,33 @@ export default function GameScreen() {
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-amber-400 text-sm font-bold">📖 旁白</span>
                       </div>
-                      <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      {(() => {
+                        const parsed = extractChoicesFromContent(msg.content)
+                        const isLastMsg = index === messages.length - 1
+                        return (
+                          <>
+                            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{parsed.text}</p>
+                            {parsed.choices.length > 0 && isLastMsg && !isLoading && (
+                              <div className="mt-4 space-y-1.5">
+                                {parsed.choices.map((choice, ci) => (
+                                  <motion.button
+                                    key={choice}
+                                    initial={{ opacity: 0, x: -15 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: ci * 0.08 }}
+                                    className="choice-button w-full"
+                                    onClick={() => sendMessage(choice)}
+                                    disabled={isLoading}
+                                  >
+                                    <span className="text-purple-400 mr-2">{ci + 1}.</span>
+                                    {choice}
+                                  </motion.button>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   )}
                 </motion.div>

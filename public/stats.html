@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 游戏访问统计</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .header h1 { font-size: 28px; color: #fff; margin-bottom: 8px; }
+    .header p { color: #888; font-size: 14px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      max-width: 1200px;
+      margin: 0 auto 32px;
+    }
+    .card {
+      background: #16161e;
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .card .number {
+      font-size: 36px;
+      font-weight: 700;
+      color: #7c5cfc;
+      margin-bottom: 4px;
+    }
+    .card .label {
+      font-size: 14px;
+      color: #888;
+    }
+    .card.online .number { color: #4ade80; }
+    .card.today .number { color: #f59e0b; }
+    .section {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+    }
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: #ccc;
+      border-bottom: 1px solid #2a2a3a;
+      padding-bottom: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #16161e;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid #1e1e2e;
+    }
+    th { background: #1a1a28; color: #aaa; font-size: 13px; font-weight: 600; }
+    td { font-size: 14px; }
+    tr:hover { background: #1e1e2e; }
+    .bar-container {
+      width: 100%;
+      background: #1e1e2e;
+      border-radius: 4px;
+      height: 20px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #7c5cfc, #a78bfa);
+      border-radius: 4px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+      font-size: 11px;
+      color: #fff;
+      min-width: 30px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-page { background: #1e3a5f; color: #60a5fa; }
+    .badge-start { background: #1a3d2e; color: #4ade80; }
+    .badge-view { background: #3d2e1a; color: #f59e0b; }
+    .trend-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 120px;
+      padding: 16px;
+      background: #16161e;
+      border-radius: 8px;
+    }
+    .trend-bar {
+      flex: 1;
+      background: linear-gradient(to top, #7c5cfc, #a78bfa);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      min-height: 4px;
+      transition: height 0.5s ease;
+    }
+    .trend-bar .trend-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .trend-bar .trend-value {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: #aaa;
+    }
+    .refresh-btn {
+      display: inline-block;
+      padding: 8px 20px;
+      background: #7c5cfc;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .refresh-btn:hover { background: #6b4ce0; }
+    .loading { text-align: center; padding: 40px; color: #666; }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .card .number { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 AI 视觉小说世界 · 访问统计</h1>
+    <p>实时数据看板</p>
+  </div>
+
+  <div style="text-align:center; margin-bottom:24px;">
+    <button class="refresh-btn" onclick="loadStats()">🔄 刷新数据</button>
+  </div>
+
+  <div class="grid" id="summary">
+    <div class="loading">加载中...</div>
+  </div>
+
+  <div class="section">
+    <h2>📈 最近 7 天访问趋势</h2>
+    <div class="trend-chart" id="trend">
+      <div class="loading" style="width:100%">加载中...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🎮 剧本游玩热度</h2>
+    <div id="story-stats">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📋 最近访问记录</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>事件类型</th>
+          <th>关联剧本</th>
+          <th>时间</th>
+        </tr>
+      </thead>
+      <tbody id="recent">
+        <tr><td colspan="3" class="loading">加载中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const STORY_NAMES = {
+      'hp-book1': '🪄 魔法石',
+      'hp-book2': '🐍 密室',
+      'hp-book3': '🐕 阿兹卡班的囚徒',
+      'hp-book4': '🐉 火焰杯',
+      'hp-book5': '⚔️ 凤凰社',
+      'hp-book6': '📖 混血王子',
+      'hp-book7': '💀 死亡圣器',
+      'dragon-raja': '🐉 龙族：卡塞尔之门',
+      'start-to-love': '💕 从此刻开始心动',
+      'campus-storm': '🌊 校园风暴',
+    }
+
+    const ACTION_NAMES = {
+      'page_view': '页面访问',
+      'start_game': '开始游戏',
+      'view_story': '查看剧本',
+      'switch_npc': '切换NPC',
+    }
+
+    function getActionBadge(action) {
+      const cls = action === 'start_game' ? 'badge-start'
+        : action === 'view_story' ? 'badge-view'
+        : 'badge-page'
+      return `<span class="badge ${cls}">${ACTION_NAMES[action] || action}</span>`
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/visit/stats')
+        const data = await res.json()
+
+        // Summary cards
+        document.getElementById('summary').innerHTML = `
+          <div class="card"><div class="number">${data.summary.totalVisits}</div><div class="label">总访问人次</div></div>
+          <div class="card"><div class="number">${data.summary.uniqueVisitors}</div><div class="label">独立访客数</div></div>
+          <div class="card today"><div class="number">${data.summary.todayVisits}</div><div class="label">今日访问</div></div>
+          <div class="card today"><div class="number">${data.summary.todayVisitors}</div><div class="label">今日独立访客</div></div>
+        `
+
+        // Trend chart
+        if (data.dailyTrend.length > 0) {
+          const maxVal = Math.max(...data.dailyTrend.map(d => d.total), 1)
+          document.getElementById('trend').innerHTML = data.dailyTrend.map(d => {
+            const pct = Math.max((d.total / maxVal) * 100, 4)
+            const dateStr = d.date.slice(5) // MM-DD
+            return `<div class="trend-bar" style="height:${pct}%">
+              <span class="trend-value">${d.total}</span>
+              <span class="trend-label">${dateStr}</span>
+            </div>`
+          }).join('')
+        } else {
+          document.getElementById('trend').innerHTML = '<div style="width:100%;text-align:center;color:#666;padding:40px;">暂无数据</div>'
+        }
+
+        // Story stats
+        if (data.storyStats.length > 0) {
+          const maxCount = Math.max(...data.storyStats.map(s => s.count), 1)
+          document.getElementById('story-stats').innerHTML = `<table>
+            <thead><tr><th>剧本</th><th>游玩次数</th><th>热度</th></tr></thead>
+            <tbody>${data.storyStats.map(s => `
+              <tr>
+                <td>${STORY_NAMES[s.story_id] || s.story_id}</td>
+                <td>${s.count}</td>
+                <td><div class="bar-container"><div class="bar" style="width:${(s.count/maxCount)*100}%">${s.count}</div></div></td>
+              </tr>
+            `).join('')}</tbody>
+          </table>`
+        } else {
+          document.getElementById('story-stats').innerHTML = '<div style="text-align:center;color:#666;padding:20px;">暂无游玩记录</div>'
+        }
+
+        // Recent visits
+        if (data.recentVisits.length > 0) {
+          document.getElementById('recent').innerHTML = data.recentVisits.map(v => `
+            <tr>
+              <td>${getActionBadge(v.action)}</td>
+              <td>${STORY_NAMES[v.story_id] || v.story_id || '-'}</td>
+              <td>${v.created_at}</td>
+            </tr>
+          `).join('')
+        } else {
+          document.getElementById('recent').innerHTML = '<tr><td colspan="3" style="text-align:center;color:#666">暂无记录</td></tr>'
+        }
+
+      } catch (err) {
+        console.error('Failed to load stats:', err)
+      }
+    }
+
+    // 首次加载 + 每30秒自动刷新
+    loadStats()
+    setInterval(loadStats, 30000)
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { generateChatResponse, type ChatMessage } from './ai.js'
+import { generateChatResponse, generatePlotChoices, type ChatMessage } from './ai.js'
 import fs from 'fs'
 import path from 'path'
 
@@ -93,13 +93,11 @@ ${attrs.name || '李明'}是这个故事的主角，不是旁观者。${story.pl
 - 直接回应玩家刚才说的话/做的事
 - 用${npc.name}的性格和语气说话
 - 120-200字
-- 结尾必须给出2-3个选择项
 
-【输出格式】
-（动作描写）"对话内容。"
-选择1: xxx
-选择2: xxx
-选择3: xxx`
+【⚠️ 重要：输出规则】
+你只需要输出NPC的对话和动作描写，绝对不要在正文中包含任何选项、选择项、编号选项。
+不要写「选择1」「选项A」「你可以」之类的文字。
+系统会单独生成选项，你只负责叙事和对话。`
 }
 
 function buildNarratorPrompt(story: any, context: StoryContext): string {
@@ -121,13 +119,11 @@ ${attrs.name || '李明'}，${story.playerRole || '故事的主角'}。你不是
 - 描写场景变化和NPC反应
 - 150-250字
 - 文笔优美，有氛围感
-- 结尾必须给出2-3个选择项
 
-【输出格式】
-叙事内容。
-选择1: xxx
-选择2: xxx
-选择3: xxx`
+【⚠️ 重要：输出规则】
+你只需要输出叙事内容，绝对不要在正文中包含任何选项、选择项、编号选项。
+不要写「选择1」「选项A」「你可以」之类的文字。
+系统会单独生成选项，你只负责叙事。`
 }
 
 export async function generateStoryResponse(
@@ -165,8 +161,15 @@ export async function generateStoryResponse(
   // Parse choices from the response
   const { cleanedContent, choices } = parseChoices(response.content)
 
-  // Always provide choices - use parsed ones or generate defaults
+  // Always provide choices - use parsed ones, or AI-generated plot choices
   let finalChoices = choices.length > 0 ? choices : response.choices || []
+  if (finalChoices.length === 0) {
+    const currentPhase = story?.phases?.find((p: any) => p.id === context.sceneId) || story?.phases?.[0]
+    const phaseTitle = currentPhase?.title || '故事进行中'
+    const npcName = npcId === '_narrator' ? undefined : story?.npcs?.find((n: any) => n.id === npcId)?.name
+    finalChoices = await generatePlotChoices(story?.title || '故事', phaseTitle, cleanedContent, npcName)
+  }
+  // 最终 fallback
   if (finalChoices.length === 0) {
     finalChoices = generateDefaultChoices(npcId, context.sceneId)
   }
@@ -203,8 +206,18 @@ function parseChoices(content: string): { cleanedContent: string; choices: strin
     }
   }
 
+  let cleaned = cleanMarkdown(contentLines.join('\n').trim())
+
+  // 二次清理：移除可能残留的选项行（AI有时会在正文末尾混入）
+  cleaned = cleaned.replace(/(?:^|\n)\s*(?:选择|选项|行动|你可以)[\s]*[1-9][.、:：\)）]\s*.+$/gm, '').trim()
+  cleaned = cleaned.replace(/(?:^|\n)\s*[1-9][.、:）\)]\s*.+$/gm, '').trim()
+  // 移除圈号选项
+  cleaned = cleaned.replace(/(?:^|\n)\s*[①②③④⑤⑥⑥⑦⑧⑨⑩]\s*.+$/gm, '').trim()
+  // 清理多余空行
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim()
+
   return {
-    cleanedContent: cleanMarkdown(contentLines.join('\n').trim()),
+    cleanedContent: cleaned,
     choices: choices.slice(0, 4),
   }
 }
@@ -213,13 +226,28 @@ function cleanMarkdown(text: string): string {
   return text.replace(/\*{1,3}([^*]+)\*{1,3}/g, '$1')
 }
 
+function pickRandom<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count)
+}
+
 function generateDefaultChoices(npcId: string, phase: string): string[] {
   if (npcId === '_narrator' || !npcId) {
-    return [
-      '仔细观察周围的情况',
-      '向前走去，探索更多',
-      '找人聊聊，了解情况',
+    const narratorChoices = [
+      '继续向前探索',
+      '仔细观察周围环境',
+      '找人打听消息',
+      '查看手中的资料',
+      '深呼吸，整理思绪',
+      '凭借直觉做出判断',
+      '主动与身边的人搭话',
+      '回忆之前发生的事',
+      '试着寻找隐藏的线索',
+      '保持警惕，慢慢靠近',
+      '大声呼唤同伴的名字',
+      '蹲下身，仔细检查地面',
     ]
+    return pickRandom(narratorChoices, 3)
   }
 
   // NPC-specific default actions
@@ -234,5 +262,20 @@ function generateDefaultChoices(npcId: string, phase: string): string[] {
     lu_gui: ['套他的话，了解周家秘密', '给他点好处换取信息', '不理会他的暗示'],
   }
 
-  return npcActions[npcId] || ['继续对话', '换个话题', '告辞离开']
+  if (npcActions[npcId]) {
+    return npcActions[npcId]
+  }
+
+  // Generic NPC interaction choices
+  const genericChoices = [
+    '继续和对方交谈',
+    '换个话题聊聊',
+    '告辞离开',
+    '问问对方的看法',
+    '分享自己的想法',
+    '观察对方的反应',
+    '提出一个请求',
+    '表达感谢后离开',
+  ]
+  return pickRandom(genericChoices, 3)
 }

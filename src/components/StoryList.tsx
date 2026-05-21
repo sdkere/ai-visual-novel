@@ -27,6 +27,9 @@ export default function StoryList() {
     '困难': 'text-red-400 bg-red-900/30 border-red-700/30',
   }
 
+  // 滚动到顶部
+  useEffect(() => { window.scrollTo(0, 0) }, [])
+
   return (
     <div className="main-menu">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -68,47 +71,57 @@ export default function StoryList() {
         <p className="text-gray-400 mt-2">选择一个故事开始冒险</p>
       </motion.div>
 
-      {/* Story cards */}
+      {/* Story cards - grid with covers */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="z-10 w-full max-w-3xl px-6 space-y-4"
+        className="z-10 w-full max-w-4xl px-6"
       >
-        {stories.map((story, index) => (
-          <motion.div
-            key={story.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 + index * 0.15 }}
-            className="world-card"
-            onClick={() => goToStoryDetail(story.id)}
-          >
-            <div className="flex items-start gap-5">
-              {/* Cover placeholder */}
-              <div className="w-28 h-36 bg-gradient-to-br from-purple-800 to-amber-800 rounded-lg flex items-center justify-center text-4xl shrink-0">
-                📖
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {stories.map((story, index) => (
+            <motion.div
+              key={story.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + index * 0.08 }}
+              className="world-card group cursor-pointer"
+              onClick={() => goToStoryDetail(story.id)}
+            >
+              {/* Cover with overlay */}
+              <div className="relative h-44 rounded-t-lg overflow-hidden">
+                {story.cover ? (
+                  <img src={story.cover} alt={story.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-800 to-amber-800 flex items-center justify-center text-5xl">
+                    📖
+                  </div>
+                )}
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Title on cover */}
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-lg font-bold text-white mb-0.5 drop-shadow-lg">{story.title}</h3>
+                  <p className="text-amber-300/80 text-xs drop-shadow">{story.subtitle}</p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xl font-bold text-purple-200 mb-1">{story.title}</h3>
-                <p className="text-amber-400/70 text-sm mb-2">{story.subtitle}</p>
-                <p className="text-gray-400 text-sm line-clamp-2 mb-3">
-                  {story.tags.join(' · ')} · {story.npcCount} 个角色
-                </p>
+              {/* Info below cover */}
+              <div className="p-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`px-2 py-0.5 rounded text-xs border ${difficultyColor[story.difficulty] || 'text-gray-400 bg-gray-800 border-gray-600'}`}>
                     {story.difficulty}
                   </span>
-                  {story.tags.slice(0, 3).map((tag) => (
+                  {story.tags.slice(0, 2).map((tag) => (
                     <span key={tag} className="px-2 py-0.5 bg-purple-900/40 border border-purple-700/30 rounded text-xs text-purple-300">
                       {tag}
                     </span>
                   ))}
+                  <span className="text-gray-500 text-xs ml-auto">{story.npcCount} 角色</span>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))}
+        </div>
 
         {stories.length === 0 && (
           <div className="text-center text-gray-500 py-12">

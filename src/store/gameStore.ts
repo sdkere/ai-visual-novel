@@ -5,6 +5,7 @@ import type {
   StoryDetail, StoryCategory, StorySummary,
 } from '@/types/game'
 import { DEFAULT_ATTRIBUTES } from '@/types/game'
+import { trackStartGame, trackViewStory } from '@/utils/tracker'
 
 interface GameStore extends GameState {
   // Auth
@@ -107,6 +108,7 @@ export const useGameStore = create<GameStore>()(
 
       goToStoryDetail: async (storyId: string) => {
         set({ view: 'storyDetail', selectedStoryId: storyId, isLoading: true })
+        trackViewStory(storyId)
         try {
           const res = await fetch(`/api/story/stories/${storyId}`)
           const detail: StoryDetail = await res.json()
@@ -118,11 +120,14 @@ export const useGameStore = create<GameStore>()(
 
       goToCharacterCreate: () => {
         const { storyDetail } = get()
+        const merged = storyDetail?.defaultAttributes
+          ? { ...DEFAULT_ATTRIBUTES, ...storyDetail.defaultAttributes }
+          : { ...DEFAULT_ATTRIBUTES }
+        // 重置性格为空，让用户自行选择
+        merged.personality = []
         set({
           view: 'characterCreate',
-          playerAttributes: storyDetail?.defaultAttributes
-            ? { ...DEFAULT_ATTRIBUTES, ...storyDetail.defaultAttributes }
-            : { ...DEFAULT_ATTRIBUTES },
+          playerAttributes: merged,
         })
       },
 
@@ -156,6 +161,7 @@ export const useGameStore = create<GameStore>()(
 
         const sessionId = generateSessionId()
         const storyId = selectedStoryId
+        trackStartGame(storyId)
 
         set({
           view: 'game',
@@ -330,6 +336,13 @@ export const useGameStore = create<GameStore>()(
     {
       name: 'visual-novel-game-state',
       // Only persist these fields (skip isLoading, storyDetail which are transient)
+      onRehydrateStorage: () => (state) => {
+        // If view was persisted as 'storyDetail' but storyDetail is null, reset to categories
+        if (state && state.view === 'storyDetail' && !state.storyDetail) {
+          state.view = 'categories'
+          state.isLoading = false
+        }
+      },
       partialize: (state) => ({
         token: state.token,
         user: state.user,

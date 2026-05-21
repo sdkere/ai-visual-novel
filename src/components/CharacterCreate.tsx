@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useGameStore } from '@/store/gameStore'
 import { PERSONALITY_OPTIONS, DEFAULT_ATTRIBUTES } from '@/types/game'
@@ -9,6 +9,8 @@ const MAX_TOTAL_POINTS = 50
 export default function CharacterCreate() {
   const { playerAttributes, setPlayerAttributes, startGame, goToCategories, storyDetail } = useGameStore()
   const [step, setStep] = useState<'basic' | 'attributes' | 'confirm'>('basic')
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   const attrPoints = playerAttributes.appearance + playerAttributes.iq + playerAttributes.eq
     + playerAttributes.charm + playerAttributes.eloquence + playerAttributes.economics + playerAttributes.luck

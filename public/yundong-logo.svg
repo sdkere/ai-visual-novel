@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="none">
+  <!-- Cloud with eye logo -->
+  <g transform="translate(10, 10)">
+    <!-- Cloud shape -->
+    <path d="M75 70c-12 0-22-8-25-19C35 53 22 40 22 24 22 10 33 0 48 0c8 0 15 3 20 8 3-1 6-2 10-2 14 0 25 10 26 23 8 3 14 11 14 20 0 12-10 21-22 21H75z" fill="#2d2d2d"/>
+    <!-- Eye inside cloud -->
+    <ellipse cx="62" cy="35" rx="20" ry="12" fill="#fff"/>
+    <circle cx="62" cy="35" r="6" fill="#2d2d2d"/>
+    <circle cx="64" cy="33" r="2" fill="#fff"/>
+  </g>
+  <!-- Chinese text: 云洞科技 -->
+  <text x="140" y="55" font-family="'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif" font-size="36" font-weight="700" fill="#2d2d2d" letter-spacing="4">云洞科技</text>
+  <!-- English text: YUNDONG TECH -->
+  <text x="140" y="85" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="16" font-weight="600" fill="#666" letter-spacing="6">YUNDONG TECH</text>
+</svg>

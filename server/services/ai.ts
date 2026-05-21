@@ -64,3 +64,45 @@ export async function generateChatResponse(
     }
   }
 }
+
+/**
+ * 根据最新剧情生成3个能推动剧情发展的选项
+ */
+export async function generatePlotChoices(
+  storyTitle: string,
+  currentPhase: string,
+  latestNarrative: string,
+  npcName?: string
+): Promise<string[]> {
+  try {
+    const npcContext = npcName ? `玩家正在与${npcName}对话。` : '这是旁白叙事。'
+    const prompt = `你是「${storyTitle}」的剧情助手。${npcContext}
+
+当前剧情阶段：${currentPhase}
+
+最新一段叙事：
+${latestNarrative.slice(-500)}
+
+请生成3个选项，每个选项必须：
+1. 与当前剧情紧密相关
+2. 能推动故事向前发展
+3. 体现不同的行动方向（如对话、行动、思考等）
+4. 简洁有力，15字以内
+
+只输出3个选项，每行一个，不要编号，不要其他文字。`
+
+    const response = await openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.85,
+      max_tokens: 150,
+    })
+
+    const content = response.choices[0]?.message?.content || ''
+    const choices = content.split('\n').map(c => c.trim()).filter(c => c.length > 0 && c.length < 50)
+
+    return choices.slice(0, 3)
+  } catch {
+    return []
+  }
+}
